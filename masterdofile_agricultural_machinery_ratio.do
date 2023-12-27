@@ -15,20 +15,20 @@ local X ///
 
 
 foreach year_quarter of local X {
-	* 1) Open SDEM dataset for the respective year_quarter
+	* Open SDEM dataset for the respective year_quarter
 use "$data/enoe_`year_quarter'/SDEMT`year_quarter'.dta"
 
-	* 2) Clean it based on INEGI criteria,
+	* Clean it based on INEGI criteria,
 drop if eda<=11 // Drop all kids below 12 years old because they weren't interviewed in the employment survey
 drop if eda==99 // INEGI indicates that with age 99 should be dropped from the sample. 
 drop if r_def!=00 // INEGI recommends to drop all the individual that didn't complete the interview. "00" in "r_def" indicates that they finished the interview
 drop if c_res==2 // INEGI recommends to drop all the interviews of people who were absent during the interview, "2" in "c_res" is for definitive absentees. 
  
-	* 3) Merge it with COE1 dataset for the respective year_quarter
+	* Merge it with COE1 dataset for the respective year_quarter
 quietly merge 1:1 cd_a ent con v_sel n_hog h_mud n_ren using "$data/enoe_`year_quarter'/COE1T`year_quarter'.dta", force
 keep if _merge==3
 
-	* 4) Keep relevant variables 
+	* Keep relevant variables 
 keep ent per p4a fac sex clase1 p3
 
 	* 5) Change values of states that end with 0. If you don't do this, during the creation of the variable "ent_mun", those entities that end with 0 will be confused to those that doesn't end with 0. i.e. 1&10 2&20 3&30  
@@ -133,13 +133,16 @@ replace year=20`i' if year==`i'
 drop per per_ent
 
 
-bysort year: summarize ratio_agri_mach
+
+bysort year: summarize ratio_agri_mach // Data quality check 
 // The ratio calculation only shows data starting from the 3rd quarter of 2012. 
-// Therefore, we will only consider the data from 2013 to 2019.
+// Therefore, I will only consider the data from 2013 to 2019.
 drop if year<=2012	
-bysort year: summarize ratio_agri_mac // Now the ratio is only available from 2013 to 2019	
+bysort year: summarize ratio_agri_mac // Now the ratio is only considering from 2013 to 2019	
 order entity_name year quarter ratio_agri_mach 
 sort entity_name year quarter	
 	
 save "$store_collapse/state_agri_mach_ratio_2013_2019.dta", replace
+
+clear
 
